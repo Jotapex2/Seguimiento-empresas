@@ -168,8 +168,12 @@ def render_sentiment_clouds(
 
     import matplotlib.pyplot as plt
 
-    fig_positive = build_wordcloud_figure(positive_freq, "Greens")
-    fig_negative = build_wordcloud_figure(negative_freq, "Reds")
+    fig_positive = build_wordcloud_figure(
+        positive_freq, "Greens", empty_message="Sin palabras positivas tras el filtrado"
+    )
+    fig_negative = build_wordcloud_figure(
+        negative_freq, "Reds", empty_message="Sin palabras negativas tras el filtrado"
+    )
 
     col_positive, col_negative = st.columns(2)
     with col_positive:

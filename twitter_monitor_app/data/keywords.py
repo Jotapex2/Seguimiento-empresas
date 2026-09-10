@@ -188,7 +188,6 @@ _EMPRESAS = [
     "CrowdStrike Chile",
     "Cruz Verde",
     "Crystal Lagoons",
-    "CTR",
     "Cumplo",
     "Defontana",
     "Dell Technologies Chile",

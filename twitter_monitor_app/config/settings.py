@@ -52,6 +52,40 @@ def is_secret_configured(value: str, min_length: int = MIN_SECRET_LENGTH) -> boo
     return not secret_issue(value, min_length)
 
 
+def host_issue(value: str) -> str:
+    """Valida un nombre de servidor (SMTP_HOST)."""
+    cleaned = (value or "").strip()
+    if not cleaned:
+        return "está vacío"
+    if cleaned.casefold() in PLACEHOLDER_VALUES:
+        return "conserva el valor de ejemplo"
+    if "." not in cleaned:
+        return "no parece un servidor válido"
+    return ""
+
+
+def email_issue(value: str) -> str:
+    """Valida una dirección de correo (SMTP_USERNAME, EMAIL_FROM)."""
+    cleaned = (value or "").strip()
+    if not cleaned:
+        return "está vacío"
+    if cleaned.casefold() in PLACEHOLDER_VALUES:
+        return "conserva el valor de ejemplo"
+    if "@" not in cleaned:
+        return "no parece un correo válido"
+    return ""
+
+
+def password_issue(value: str) -> str:
+    """Valida una contraseña SMTP, avisando por espacios internos."""
+    issue = secret_issue(value, MIN_SECRET_LENGTH)
+    if issue:
+        return issue
+    if any(character.isspace() for character in value.strip()):
+        return "contiene espacios internos"
+    return ""
+
+
 @dataclass(frozen=True)
 class AppConfig:
     app_name: str = "Monitoreo Sectorial X/Twitter Chile"

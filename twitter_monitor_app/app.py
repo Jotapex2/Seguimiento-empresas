@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Dict, Iterable, List
+
+# Backend sin interfaz gráfica: en servidores (Streamlit Cloud) no hay display y
+# un backend interactivo puede impedir que las nubes de palabras se rendericen.
+os.environ.setdefault("MPLBACKEND", "Agg")
 
 import pandas as pd
 import streamlit as st
@@ -34,8 +39,9 @@ if __package__:
     from twitter_monitor_app.services.data_manager import collect_api_data, mock_tweets
     from twitter_monitor_app.services.email_sender import (
         EmailDeliveryError,
-        is_email_delivery_configured,
+        email_configuration_issues,
         send_report_email,
+        test_smtp_connection,
     )
     from twitter_monitor_app.services.exporter import dataframe_to_csv_bytes, dataframe_to_excel_bytes
     from twitter_monitor_app.services.runtime_store import get_history_count, load_cache, make_cache_key, persist_history, save_cache
@@ -61,7 +67,12 @@ else:
     )
     from services.classifier import post_process_tweets
     from services.data_manager import collect_api_data, mock_tweets
-    from services.email_sender import EmailDeliveryError, is_email_delivery_configured, send_report_email
+    from services.email_sender import (
+        EmailDeliveryError,
+        email_configuration_issues,
+        send_report_email,
+        test_smtp_connection,
+    )
     from services.exporter import dataframe_to_csv_bytes, dataframe_to_excel_bytes
     from services.runtime_store import get_history_count, load_cache, make_cache_key, persist_history, save_cache
     from services.scoring import enrich_scores
@@ -170,9 +181,27 @@ def render_email_report_section(filters: Dict, export_df: pd.DataFrame, export_n
         st.caption("No hay datos para adjuntar en el informe.")
         return
 
-    if not is_email_delivery_configured():
-        st.warning("Falta configuración SMTP en `.env`. Define `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` y `EMAIL_FROM`.")
+    settings = get_settings()
+    issues = email_configuration_issues()
+    if issues:
+        st.warning("Configuración SMTP incompleta:")
+        for issue in issues:
+            st.markdown(f"- `{issue}`")
+        st.caption(
+            f"Se está leyendo SMTP_HOST={settings.smtp_host!r}, "
+            f"SMTP_PORT={settings.smtp_port}, SMTP_USERNAME={settings.smtp_username!r}. "
+            "En Streamlit Cloud revisa el panel Secrets; recuerda que cada valor va entre comillas "
+            'así: SMTP_HOST = "smtp.gmail.com".'
+        )
         return
+
+    if st.button("Probar conexión SMTP", key=f"test-smtp-{export_name}"):
+        with st.spinner("Conectando con el servidor SMTP..."):
+            error = test_smtp_connection()
+        if error:
+            st.error(error)
+        else:
+            st.success("Conexión y autenticación SMTP correctas.")
 
     with st.form(f"email-report-form-{export_name}"):
         recipients_raw = st.text_input("Destinatarios", placeholder="persona@empresa.cl, equipo@empresa.cl")

@@ -7,3 +7,4 @@
 - Targets Streamlit (Streamlit Cloud) as the runtime/deployment environment for the app. Confidence: 0.7
 - Expects sentiment analysis to measure attitude toward the mentioned entity, not the theme: sector/industry vocabulary (mining, automotive, energy, etc.) and generic corporate terms must not be read as negative or appear as sentiment signals. Confidence: 0.5
 - Wants generated caches and runtime artifacts kept out of version control (`__pycache__/`, `*.pyc`, runtime cache/history dirs) via `.gitignore`. Confidence: 0.6
+- Reports runtime problems by pasting raw deployment/console output (Streamlit Cloud logs and full tracebacks) rather than a summarized description, expecting them to be used to diagnose the root cause. Confidence: 0.5

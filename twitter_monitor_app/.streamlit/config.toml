@@ -1,0 +1,11 @@
+# El file watcher de Streamlit tiene una condicion de carrera conocida en la
+# recarga de modulos: al reimportar paquetes locales puede lanzar
+# "KeyError: 'config'" / "'services'" desde dentro del import de Python.
+# Es un bug confirmado y aun abierto de Streamlit (streamlit/streamlit#6404).
+#
+# En Streamlit Cloud la app se reinicia sola al hacer push, asi que el watcher
+# no aporta y solo genera esos tracebacks en cada actualizacion.
+# Localmente, descomenta la linea de abajo si quieres volver a tener
+# auto-recarga al guardar un archivo.
+[server]
+fileWatcherType = "none"

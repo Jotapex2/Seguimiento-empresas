@@ -611,24 +611,37 @@ def build_sentiment_word_frequencies(
     return positive_freq, negative_freq, words_df
 
 
-def build_wordcloud_figure(frequencies: Dict[str, int], colormap: str):
+def build_wordcloud_figure(
+    frequencies: Dict[str, int],
+    colormap: str,
+    *,
+    empty_message: str = "Sin palabras para mostrar",
+):
+    import matplotlib
+
+    matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from wordcloud import WordCloud
 
     figure, axes = plt.subplots(figsize=(8, 4))
+    message = empty_message
     if frequencies:
-        cloud = WordCloud(
-            width=800,
-            height=400,
-            background_color="white",
-            colormap=colormap,
-            max_words=100,
-            prefer_horizontal=0.9,
-            collocations=False,
-        ).generate_from_frequencies(dict(frequencies))
-        axes.imshow(cloud, interpolation="bilinear")
-    else:
-        axes.text(0.5, 0.5, "Sin palabras para mostrar", ha="center", va="center", fontsize=14)
+        try:
+            cloud = WordCloud(
+                width=800,
+                height=400,
+                background_color="white",
+                colormap=colormap,
+                max_words=100,
+                prefer_horizontal=0.9,
+                collocations=False,
+            ).generate_from_frequencies(dict(frequencies))
+            axes.imshow(cloud, interpolation="bilinear")
+            message = ""
+        except Exception as exc:  # noqa: BLE001
+            message = f"No se pudo generar la nube: {exc}"
+    if message:
+        axes.text(0.5, 0.5, message, ha="center", va="center", fontsize=12, wrap=True)
     axes.axis("off")
     figure.tight_layout()
     return figure
