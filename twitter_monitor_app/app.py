@@ -17,7 +17,7 @@ if __package__:
     if str(PACKAGE_PARENT) not in sys.path:
         sys.path.insert(0, str(PACKAGE_PARENT))
 
-    from twitter_monitor_app.components.charts import render_charts
+    from twitter_monitor_app.components.charts import render_charts, render_sentiment_clouds, render_top_mentions
     from twitter_monitor_app.components.filters import render_sidebar_filters
     from twitter_monitor_app.components.metrics import render_kpis
     from twitter_monitor_app.components.tables import render_rankings, render_results_table
@@ -31,14 +31,6 @@ if __package__:
     )
     from twitter_monitor_app.services.classifier import post_process_tweets
     from twitter_monitor_app.services.data_manager import collect_api_data, mock_tweets
-    from twitter_monitor_app.services.deepseek_analysis import (
-        DeepSeekAnalysisError,
-        build_analysis_sections,
-        related_links,
-        request_deepseek_analysis,
-        section_cache_payload,
-        select_related_rows,
-    )
     from twitter_monitor_app.services.email_sender import (
         EmailDeliveryError,
         is_email_delivery_configured,
@@ -47,12 +39,13 @@ if __package__:
     from twitter_monitor_app.services.exporter import dataframe_to_csv_bytes, dataframe_to_excel_bytes
     from twitter_monitor_app.services.runtime_store import get_history_count, load_cache, make_cache_key, persist_history, save_cache
     from twitter_monitor_app.services.scoring import enrich_scores
+    from twitter_monitor_app.services.sentiment_analysis import classify_sentiments
     from twitter_monitor_app.services.twitter_client import TwitterApiError
 else:
     if str(PACKAGE_ROOT) not in sys.path:
         sys.path.insert(0, str(PACKAGE_ROOT))
 
-    from components.charts import render_charts
+    from components.charts import render_charts, render_sentiment_clouds, render_top_mentions
     from components.filters import render_sidebar_filters
     from components.metrics import render_kpis
     from components.tables import render_rankings, render_results_table
@@ -62,18 +55,11 @@ else:
     from google_social_monitor import GoogleRateLimitError, MAX_GOOGLE_PAGES_PER_KEYWORD, collect_monitor_results
     from services.classifier import post_process_tweets
     from services.data_manager import collect_api_data, mock_tweets
-    from services.deepseek_analysis import (
-        DeepSeekAnalysisError,
-        build_analysis_sections,
-        related_links,
-        request_deepseek_analysis,
-        section_cache_payload,
-        select_related_rows,
-    )
     from services.email_sender import EmailDeliveryError, is_email_delivery_configured, send_report_email
     from services.exporter import dataframe_to_csv_bytes, dataframe_to_excel_bytes
     from services.runtime_store import get_history_count, load_cache, make_cache_key, persist_history, save_cache
     from services.scoring import enrich_scores
+    from services.sentiment_analysis import classify_sentiments
     from services.twitter_client import TwitterApiError
 
 logging.basicConfig(level=logging.INFO)
@@ -156,29 +142,7 @@ def build_report_mail_subject(filters: Dict) -> str:
     )
 
 
-def format_analysis_for_email(analysis_sections: List[Dict] | None) -> str:
-    if not analysis_sections:
-        return ""
-
-    blocks = ["", "Análisis DeepSeek:"]
-    for section in analysis_sections:
-        links = section.get("links", [])
-        link_lines = "\n".join(f"- {link}" for link in links) if links else "- Sin links relacionados."
-        blocks.append(
-            "\n".join(
-                [
-                    "",
-                    section.get("title", "Sección"),
-                    section.get("analysis", "Sin análisis disponible."),
-                    "Links relacionados:",
-                    link_lines,
-                ]
-            )
-        )
-    return "\n".join(blocks)
-
-
-def build_report_mail_body(filters: Dict, export_df: pd.DataFrame, analysis_sections: List[Dict] | None = None) -> str:
+def build_report_mail_body(filters: Dict, export_df: pd.DataFrame) -> str:
     selected_groups = [
         f"Categorías: {', '.join(filters['selected_categories']) or 'sin selección'}",
         f"Personas: {', '.join(filters['selected_people']) or 'sin selección'}",
@@ -191,13 +155,10 @@ def build_report_mail_body(filters: Dict, export_df: pd.DataFrame, analysis_sect
         f"Total de registros exportados: {len(export_df)}",
         *selected_groups,
     ]
-    analysis_text = format_analysis_for_email(analysis_sections)
-    if analysis_text:
-        summary_lines.append(analysis_text)
     return "\n".join(summary_lines)
 
 
-def render_email_report_section(filters: Dict, export_df: pd.DataFrame, export_name: str, analysis_sections: List[Dict] | None = None):
+def render_email_report_section(filters: Dict, export_df: pd.DataFrame, export_name: str):
     st.markdown("#### Enviar por correo")
     if export_df.empty:
         st.caption("No hay datos para adjuntar en el informe.")
@@ -223,7 +184,7 @@ def render_email_report_section(filters: Dict, export_df: pd.DataFrame, export_n
         send_report_email(
             recipients=recipients,
             subject=subject.strip() or build_report_mail_subject(filters),
-            body=build_report_mail_body(filters, export_df, analysis_sections),
+            body=build_report_mail_body(filters, export_df),
             attachment_name=attachment_name,
             attachment_bytes=attachment_bytes,
         )
@@ -234,70 +195,30 @@ def render_email_report_section(filters: Dict, export_df: pd.DataFrame, export_n
     st.success(f"Informe enviado a: {', '.join(recipients)}")
 
 
-def render_deepseek_analysis(df: pd.DataFrame, source_label: str, catalog: dict, existing_sections: List[Dict] | None = None) -> List[Dict]:
-    st.subheader("Análisis DeepSeek")
-    if existing_sections is not None:
-        for section in existing_sections:
-            st.markdown(f"#### {section.get('title', 'Sección')}")
-            st.markdown(section.get("analysis", "Sin análisis disponible."))
-            links = section.get("links", [])
-            if links:
-                st.markdown("Links relacionados:")
-                for link in links:
-                    st.markdown(f"- [{link}]({link})")
-            else:
-                st.caption(f"Sin links relacionados en los resultados de {source_label}.")
-        return existing_sections
+def render_insights(df: pd.DataFrame, existing: Dict | None = None) -> Dict:
+    st.subheader("Empresas y keywords más mencionadas")
+    render_top_mentions(df)
 
-    if df.empty:
-        st.caption("No hay resultados para analizar.")
-        return []
-
-    settings = get_settings()
-    if not settings.deepseek_api_key:
-        st.warning("Falta configurar `DEEPSEEK_API_KEY` en `.env` para generar el análisis automático.")
-        return []
-
-    analysis_sections: List[Dict] = []
-    for section in build_analysis_sections(catalog):
-        fallback_to_all = section.title == "Implicancias para la industria sanitaria"
-        rows = select_related_rows(df, section.terms, fallback_to_all=fallback_to_all)
-        links = related_links(rows)
-        with st.spinner(f"Generando análisis: {section.title}..."):
-            cache_key = make_cache_key(
-                "llm_analysis",
-                {
-                    "model": settings.deepseek_model,
-                    "section": section_cache_payload(section, rows),
-                },
+    st.subheader("Análisis de sentimiento")
+    if existing is not None:
+        sentiments = existing.get("sentiments", {})
+        used_fallback = bool(existing.get("used_fallback", False))
+    elif df.empty:
+        sentiments, used_fallback = {}, False
+    else:
+        settings = get_settings()
+        with st.spinner("Clasificando el sentimiento de los resultados con DeepSeek..."):
+            sentiments, used_fallback = classify_sentiments(
+                df,
+                api_key=settings.deepseek_api_key,
+                api_url=settings.deepseek_api_url,
+                model=settings.deepseek_model,
             )
-            analysis = load_cache(cache_key, settings.default_cache_ttl_hours)
-            if analysis is None:
-                try:
-                    analysis = request_deepseek_analysis(
-                        api_key=settings.deepseek_api_key,
-                        api_url=settings.deepseek_api_url,
-                        model=settings.deepseek_model,
-                        section=section,
-                        rows=rows,
-                    )
-                    save_cache(cache_key, analysis)
-                except DeepSeekAnalysisError as exc:
-                    analysis = f"No se pudo generar esta sección: {exc}"
-
-        analysis_sections.append({"title": section.title, "analysis": analysis, "links": links})
-        st.markdown(f"#### {section.title}")
-        st.markdown(analysis)
-        if links:
-            st.markdown("Links relacionados:")
-            for link in links:
-                st.markdown(f"- [{link}]({link})")
-        else:
-            st.caption(f"Sin links relacionados en los resultados de {source_label}.")
-    return analysis_sections
+    render_sentiment_clouds(df, sentiments, used_fallback=used_fallback)
+    return {"sentiments": sentiments, "used_fallback": used_fallback}
 
 
-def render_x_app_dashboard(filters: Dict, df: pd.DataFrame, query_stats: Dict, catalog: dict, analysis_sections: List[Dict] | None = None) -> List[Dict]:
+def render_x_app_dashboard(filters: Dict, df: pd.DataFrame, query_stats: Dict, catalog: dict, insights: Dict | None = None) -> Dict:
     render_kpis(df)
     render_limitations(df)
     render_efficiency_summary(filters, query_stats, df)
@@ -307,7 +228,7 @@ def render_x_app_dashboard(filters: Dict, df: pd.DataFrame, query_stats: Dict, c
     st.subheader("Resultados")
     render_results_table(df)
 
-    analysis_sections = render_deepseek_analysis(df, format_google_mode(filters), catalog, analysis_sections)
+    insights = render_insights(df, insights)
 
     st.subheader("Visualizaciones")
     render_charts(df)
@@ -327,10 +248,10 @@ def render_x_app_dashboard(filters: Dict, df: pd.DataFrame, query_stats: Dict, c
             file_name="twitter_monitor_results.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-        render_email_report_section(filters, export_df, "twitter_monitor_results", analysis_sections)
+        render_email_report_section(filters, export_df, "twitter_monitor_results")
     else:
         st.caption("Sin datos exportables con el filtro actual.")
-    return analysis_sections
+    return insights
 
 
 def render_google_dashboard(
@@ -338,15 +259,15 @@ def render_google_dashboard(
     df: pd.DataFrame,
     google_keywords: Iterable[str],
     catalog: dict,
-    analysis_sections: List[Dict] | None = None,
-) -> List[Dict]:
+    insights: Dict | None = None,
+) -> Dict:
     render_google_metrics(df)
     render_google_summary(filters, google_keywords, df)
 
     st.subheader("Resultados")
     render_google_results(df)
 
-    analysis_sections = render_deepseek_analysis(df, format_google_mode(filters), catalog, analysis_sections)
+    insights = render_insights(df, insights)
 
     st.subheader("Exportación")
     export_name = build_google_export_name(filters)
@@ -358,10 +279,10 @@ def render_google_dashboard(
             file_name=f"{export_name}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-        render_email_report_section(filters, df, export_name, analysis_sections)
+        render_email_report_section(filters, df, export_name)
     else:
         st.caption("Sin datos exportables con el filtro actual.")
-    return analysis_sections
+    return insights
 
 
 def render_last_monitor_payload() -> bool:
@@ -377,7 +298,7 @@ def render_last_monitor_payload() -> bool:
             payload["df"],
             payload["query_stats"],
             catalog,
-            payload.get("analysis_sections"),
+            payload.get("insights"),
         )
         return True
 
@@ -386,7 +307,7 @@ def render_last_monitor_payload() -> bool:
         payload["df"],
         payload.get("google_keywords", []),
         catalog,
-        payload.get("analysis_sections"),
+        payload.get("insights"),
     )
     return True
 
@@ -497,13 +418,13 @@ def main():
             df = build_dataframe(processed, catalog)
             persist_history(df.to_dict(orient="records"))
 
-        analysis_sections = render_x_app_dashboard(filters, df, query_stats, catalog)
+        insights = render_x_app_dashboard(filters, df, query_stats, catalog)
         st.session_state["last_monitor_payload"] = {
             "mode": "x_app",
             "filters": filters,
             "df": df,
             "query_stats": query_stats,
-            "analysis_sections": analysis_sections,
+            "insights": insights,
         }
         return
 
@@ -535,13 +456,13 @@ def main():
             st.error(str(exc))
             return
 
-    analysis_sections = render_google_dashboard(filters, df, google_keywords, catalog)
+    insights = render_google_dashboard(filters, df, google_keywords, catalog)
     st.session_state["last_monitor_payload"] = {
         "mode": "google",
         "filters": filters,
         "df": df,
         "google_keywords": list(google_keywords),
-        "analysis_sections": analysis_sections,
+        "insights": insights,
     }
 
 

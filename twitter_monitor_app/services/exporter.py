@@ -83,6 +83,19 @@ def build_export_frame(df: pd.DataFrame) -> pd.DataFrame:
     return export_df[existing_columns + remaining_columns]
 
 
+def plotly_figure_to_png_bytes(fig, scale: int = 2) -> bytes | None:
+    try:
+        return fig.to_image(format="png", scale=scale)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def matplotlib_figure_to_png_bytes(fig) -> bytes:
+    output = BytesIO()
+    fig.savefig(output, format="png", bbox_inches="tight", dpi=150)
+    return output.getvalue()
+
+
 def dataframe_to_csv_bytes(df: pd.DataFrame) -> bytes:
     return build_export_frame(df).to_csv(index=False).encode("utf-8")
 

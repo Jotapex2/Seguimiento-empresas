@@ -1,6 +1,8 @@
 from copy import deepcopy
 
-"empresas": [
+SECTOR_TOPICS: dict = {}
+
+_EMPRESAS = [
     "Abastible",
     "Accenture Chile",
     "Acciona Energía Chile",
@@ -557,8 +559,19 @@ from copy import deepcopy
     "Zapping",
     "Zerviz",
     "ZTE Chile",
-    "Zurich Chile"
-  ]
+    "Zurich Chile",
+]
+
+COMPANIES: dict = {name: [name] for name in _EMPRESAS}
+
+PEOPLE: dict = {}
+PRIORITY_PEOPLE: list = []
+RISK_TERMS: list = []
+CHILE_CONTEXT_TERMS: list = []
+MONITOR_USERS: list = []
+MONITOR_ACCOUNTS: dict = {}
+
+
 def get_default_catalog() -> dict:
     return deepcopy(
         {
