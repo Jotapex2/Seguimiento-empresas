@@ -28,6 +28,7 @@ if __package__:
         GoogleRateLimitError,
         MAX_GOOGLE_PAGES_PER_KEYWORD,
         collect_monitor_results,
+        has_google_api_configured,
     )
     from twitter_monitor_app.services.classifier import post_process_tweets
     from twitter_monitor_app.services.data_manager import collect_api_data, mock_tweets
@@ -52,7 +53,12 @@ else:
     from components.taxonomy_editor import render_taxonomy_editor
     from config.settings import get_settings
     from data.keywords import get_default_catalog
-    from google_social_monitor import GoogleRateLimitError, MAX_GOOGLE_PAGES_PER_KEYWORD, collect_monitor_results
+    from google_social_monitor import (
+        GoogleRateLimitError,
+        MAX_GOOGLE_PAGES_PER_KEYWORD,
+        collect_monitor_results,
+        has_google_api_configured,
+    )
     from services.classifier import post_process_tweets
     from services.data_manager import collect_api_data, mock_tweets
     from services.email_sender import EmailDeliveryError, is_email_delivery_configured, send_report_email
@@ -432,6 +438,13 @@ def main():
     google_keywords = build_google_keywords(filters, catalog)
     if not google_keywords:
         st.error("Selecciona al menos una categoría, persona o empresa para buscar en Google.")
+        return
+
+    if not has_google_api_configured():
+        st.error(
+            "No hay ninguna API de búsqueda configurada. Define `SERPER_API_KEY`, "
+            "o `GOOGLE_API_KEY` + `GOOGLE_CX`, o `SEARCHAPI_API_KEY` con credenciales válidas."
+        )
         return
 
     with st.spinner("Consultando resultados públicos vía Google..."):

@@ -91,6 +91,20 @@ DEEPSEEK_MODEL=deepseek-chat
 
 El envío de correo usa SMTP y adjunta el informe en formato Excel desde la sección de exportación. `DEEPSEEK_API_KEY` se usa para clasificar el sentimiento de cada resultado en la sección "Análisis de sentimiento"; si no está configurada, la app usa un clasificador léxico local como respaldo.
 
+### Validación de credenciales
+
+Las credenciales se validan antes de usarlas: si un valor está vacío, conserva el texto de ejemplo (`pega_aqui_tu_api_key`, etc.) o es demasiado corto para ser una key real, la app muestra qué falta en vez de fallar con un error HTTP genérico.
+
+Por ejemplo, una `TWITTERAPI_IO_KEY` incompleta produce:
+
+```
+TWITTERAPI_IO_KEY parece incompleta (4 caracteres). Configura la key completa de twitterapi.io.
+```
+
+Los espacios al inicio o al final de cada valor se eliminan automáticamente, así que un espacio accidental al pegar una key o contraseña no rompe la autenticación.
+
+En Streamlit Cloud, define estos valores en el panel **Secrets** de la app (no en el repo). Streamlit expone los secretos de nivel raíz como variables de entorno, que es como los lee `config/settings.py`.
+
 ## Instalación
 
 ```bash

@@ -19,6 +19,8 @@ from requests import Response, Session
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from config.settings import is_secret_configured
+
 logger = logging.getLogger("google_social_monitor")
 
 # URLs de APIs de Respaldo
@@ -83,6 +85,21 @@ def chunk_list(data: list, size: int):
     for i in range(0, len(data), size): yield data[i : i + size]
 
 
+def _configured_env(name: str) -> str | None:
+    """Devuelve la variable de entorno solo si parece una credencial real."""
+    value = os.environ.get(name, "")
+    return value.strip() if is_secret_configured(value) else None
+
+
+def has_google_api_configured() -> bool:
+    """True si hay al menos una API de búsqueda utilizable configurada."""
+    if _configured_env("SERPER_API_KEY"):
+        return True
+    if _configured_env("GOOGLE_API_KEY") and _configured_env("GOOGLE_CX"):
+        return True
+    return bool(_configured_env("SEARCHAPI_API_KEY"))
+
+
 def build_google_query(keywords: list[str], platform: PlatformConfig) -> str:
     joined = " OR ".join(f'"{kw}"' for kw in keywords)
     return f'{platform.search_site} ({joined})'
@@ -140,17 +157,17 @@ def search_keywords_batch(session: Session, keywords: list[str], results_per_bat
     method_used = "Ninguno"
 
     # Prioridad 1: Serper.dev
-    if serper_key := os.environ.get("SERPER_API_KEY"):
+    if serper_key := _configured_env("SERPER_API_KEY"):
         raw_results = fetch_serper_results(session, serper_key, query, results_per_batch)
         if raw_results: method_used = "Serper.dev"
 
     # Prioridad 2: Google Official
-    if not raw_results and (g_key := os.environ.get("GOOGLE_API_KEY")) and (g_cx := os.environ.get("GOOGLE_CX")):
+    if not raw_results and (g_key := _configured_env("GOOGLE_API_KEY")) and (g_cx := _configured_env("GOOGLE_CX")):
         raw_results = fetch_google_official_results(session, g_key, g_cx, query, results_per_batch)
         if raw_results: method_used = "Google Official API"
 
     # Prioridad 3: SearchAPI.io
-    if not raw_results and (sapi_key := os.environ.get("SEARCHAPI_API_KEY")):
+    if not raw_results and (sapi_key := _configured_env("SEARCHAPI_API_KEY")):
         raw_results = fetch_searchapi_results(session, sapi_key, query, results_per_batch)
         if raw_results: method_used = "SearchAPI.io"
 

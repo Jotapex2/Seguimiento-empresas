@@ -8,7 +8,7 @@ from typing import Dict, Iterable, List
 import pandas as pd
 import requests
 
-from config.settings import get_settings
+from config.settings import get_settings, is_secret_configured
 from services.runtime_store import load_cache, make_cache_key, save_cache
 from utils.text_utils import normalize_text
 
@@ -248,8 +248,8 @@ def _strip_json_fences(content: str) -> str:
 
 
 def _post_deepseek(*, api_key: str, api_url: str, model: str, user_prompt: str, system_prompt: str, timeout: int = 60) -> str:
-    if not api_key:
-        raise SentimentAnalysisError("Falta configurar DEEPSEEK_API_KEY en `.env`.")
+    if not is_secret_configured(api_key):
+        raise SentimentAnalysisError("Falta configurar una DEEPSEEK_API_KEY válida en `.env`.")
     response = requests.post(
         api_url,
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
@@ -342,7 +342,7 @@ def classify_sentiments(
     used_fallback = False
     if not posts:
         return sentiments, used_fallback
-    if not api_key:
+    if not is_secret_configured(api_key):
         return {post["id"]: _lexicon_sentiment(post["text"]) for post in posts}, True
 
     ttl = cache_ttl_hours if cache_ttl_hours is not None else get_settings().default_cache_ttl_hours

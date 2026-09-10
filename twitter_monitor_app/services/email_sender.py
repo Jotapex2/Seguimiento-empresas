@@ -3,7 +3,7 @@ from __future__ import annotations
 import smtplib
 from email.message import EmailMessage
 
-from config.settings import get_settings
+from config.settings import get_settings, is_secret_configured
 
 
 class EmailDeliveryError(RuntimeError):
@@ -18,7 +18,7 @@ def is_email_delivery_configured() -> bool:
         settings.smtp_password,
         settings.email_from,
     ]
-    return all(bool(value.strip()) for value in required_values)
+    return all(is_secret_configured(value) for value in required_values)
 
 
 def send_report_email(

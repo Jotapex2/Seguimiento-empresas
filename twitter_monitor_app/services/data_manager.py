@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
+from config.settings import get_settings
 from services.query_builder import append_date_operators, build_query_plan
 from services.runtime_store import (
     load_cache,
@@ -120,7 +121,10 @@ def collect_api_data(filters: Dict, catalog: dict) -> tuple[List[Dict], Dict]:
     }
 
     if not client.enabled:
-        raise TwitterApiError("No hay API key configurada. Activa simulación o define TWITTERAPI_IO_KEY.")
+        issue = get_settings().api_key_issue
+        raise TwitterApiError(
+            f"TWITTERAPI_IO_KEY {issue}. Activa la simulación o configura la key completa de twitterapi.io."
+        )
 
     if not query_plan and not filters["selected_monitor_users"]:
         raise TwitterApiError("Selecciona al menos una categoría, persona, empresa o timeline para ejecutar el monitoreo.")

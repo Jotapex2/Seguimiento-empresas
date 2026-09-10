@@ -8,7 +8,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import get_settings
+from config.settings import get_settings, secret_issue
 from utils.helpers import ensure_utc_bounds, parse_datetime
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class TwitterApiError(RuntimeError):
 class TwitterClient:
     def __init__(self, api_key: Optional[str] = None, base_url: Optional[str] = None):
         self.settings = get_settings()
-        self.api_key = api_key or self.settings.api_key
+        self.api_key = (api_key or self.settings.api_key).strip()
         self.base_url = (base_url or self.settings.base_url).rstrip("/")
         self.session = requests.Session()
         retry = Retry(
@@ -36,11 +36,15 @@ class TwitterClient:
 
     @property
     def enabled(self) -> bool:
-        return bool(self.api_key)
+        return not secret_issue(self.api_key)
 
     def _headers(self) -> Dict[str, str]:
-        if not self.api_key:
-            raise TwitterApiError("TWITTERAPI_IO_KEY no configurada.")
+        issue = secret_issue(self.api_key)
+        if issue:
+            raise TwitterApiError(
+                f"TWITTERAPI_IO_KEY {issue}. Configura la key completa de twitterapi.io "
+                "en `.env` o en los Secrets de Streamlit."
+            )
         return {"x-api-key": self.api_key}
 
     def _request(self, endpoint: str, params: Optional[Dict] = None) -> Dict:
