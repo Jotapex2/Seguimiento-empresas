@@ -104,6 +104,24 @@ def render_top_mentions(df: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
     )
     st.plotly_chart(fig, width="stretch")
     _render_plotly_download(fig, "top_menciones")
+
+    import matplotlib.pyplot as plt
+
+    st.caption("Nube de empresas/keywords más mencionadas (el tamaño refleja el número de menciones)")
+    fig_cloud = build_wordcloud_figure(
+        dict(zip(top_df["entidad"], top_df["menciones"])),
+        "Blues",
+    )
+    st.pyplot(fig_cloud)
+    st.download_button(
+        "Descargar nube (PNG)",
+        data=matplotlib_figure_to_png_bytes(fig_cloud),
+        file_name="nube_menciones.png",
+        mime="image/png",
+        key="png-nube-menciones",
+    )
+    plt.close(fig_cloud)
+
     st.download_button(
         "Descargar CSV",
         data=top_df.to_csv(index=False).encode("utf-8"),
@@ -136,6 +154,13 @@ def render_sentiment_clouds(
             "No se pudo usar DeepSeek (falta `DEEPSEEK_API_KEY` o hubo un error). "
             "Se usó un clasificador léxico local como respaldo."
         )
+
+    st.caption(
+        "Solo se muestran las palabras que distinguen un sentimiento del otro. "
+        "Se excluyen los conectores y palabras funcionales (pero, como, además, sin embargo…) "
+        "y los términos de rubro o genéricos (minería, automotriz, empresa, etc.), "
+        "porque describen el tema, no una emoción."
+    )
 
     positive_freq, negative_freq, words_df = build_sentiment_word_frequencies(
         df, sentiments, extra_stopwords=extra_stopwords

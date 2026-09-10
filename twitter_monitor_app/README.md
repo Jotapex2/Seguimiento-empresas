@@ -17,7 +17,7 @@ La integración está basada en `twitterapi.io`, no en la API oficial de X/Twitt
   - eliminación de duplicados
 - Scoring de relevancia y riesgo reputacional.
 - Dashboard ejecutivo con KPIs, rankings y gráficos.
-- Top 10 de empresas/keywords más mencionadas (tabla + gráfico).
+- Top 10 de empresas/keywords más mencionadas (tabla, gráfico y nube de palabras).
 - Análisis de sentimiento con DeepSeek: clasifica cada resultado y genera dos nubes de palabras (positivas y negativas).
 - Exportación a CSV y Excel.
 - Descarga en PNG de todos los gráficos y en CSV de los datos de cada gráfico.

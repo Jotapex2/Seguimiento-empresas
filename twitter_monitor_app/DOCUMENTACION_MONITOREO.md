@@ -205,9 +205,10 @@ Se eliminó el análisis anterior (implicancias de industria sanitaria + dichos 
 
 En su lugar:
 
-- `components/charts.py` agrega **Top 10 de empresas/keywords más mencionadas** (tabla, gráfico y CSV).
+- `components/charts.py` agrega **Top 10 de empresas/keywords más mencionadas** (tabla, gráfico, nube de palabras y CSV). En la nube, el tamaño de cada entidad es proporcional a su número de menciones.
 - `services/sentiment_analysis.py` clasifica cada publicación como `positivo`, `negativo` o `neutral` usando DeepSeek (en lotes, con caché). Si falta `DEEPSEEK_API_KEY` o falla la API, usa un clasificador léxico local como respaldo.
 - Con esa clasificación se generan **dos nubes de palabras** (positivas y negativas) más un CSV con `sentimiento, palabra, frecuencia`.
+- Las nubes excluyen conectores y palabras funcionales (pero, como, además, sin embargo, etc.), términos de rubro (minería, automotriz, agua, energía, etc.) y palabras que aparecen parecido en ambas clases. Se conserva solo lo que realmente distingue un sentimiento del otro, porque el vocabulario del tema no es señal de emoción.
 
 ### Descargas
 
