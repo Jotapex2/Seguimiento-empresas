@@ -1,0 +1,10 @@
+streamlit>=1.44.0
+# Starlette 1.4 changed GZipResponder's constructor. Streamlit 1.61 still uses
+# the previous signature, causing Streamlit Cloud health checks to return 500.
+starlette==0.52.1
+pandas>=2.2.0
+plotly>=5.24.0
+requests>=2.32.0
+beautifulsoup4>=4.12.3
+python-dotenv>=1.0.1
+openpyxl>=3.1.5
