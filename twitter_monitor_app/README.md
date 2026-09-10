@@ -17,9 +17,11 @@ La integración está basada en `twitterapi.io`, no en la API oficial de X/Twitt
   - eliminación de duplicados
 - Scoring de relevancia y riesgo reputacional.
 - Dashboard ejecutivo con KPIs, rankings y gráficos.
+- Top 10 de empresas/keywords más mencionadas (tabla + gráfico).
+- Análisis de sentimiento con DeepSeek: clasifica cada resultado y genera dos nubes de palabras (positivas y negativas).
 - Exportación a CSV y Excel.
+- Descarga en PNG de todos los gráficos y en CSV de los datos de cada gráfico.
 - Envío de informe por correo con adjunto Excel vía SMTP.
-- Análisis ejecutivo con DeepSeek Chat en cuatro secciones: industria sanitaria, ministro Iván Poduje, Louis de Grange y Nicolás Balmaceda.
 - Modo simulación sin API para probar la UI.
 - Caché local en disco para evitar consultas repetidas.
 - Modo incremental para traer sólo posts nuevos por query.
@@ -87,7 +89,7 @@ DEEPSEEK_API_URL=https://api.deepseek.com/chat/completions
 DEEPSEEK_MODEL=deepseek-chat
 ```
 
-El envío de correo usa SMTP y adjunta el informe en formato Excel desde la sección de exportación. Si `DEEPSEEK_API_KEY` está configurada, el cuerpo del correo incluye las tres secciones de análisis y links relacionados.
+El envío de correo usa SMTP y adjunta el informe en formato Excel desde la sección de exportación. `DEEPSEEK_API_KEY` se usa para clasificar el sentimiento de cada resultado en la sección "Análisis de sentimiento"; si no está configurada, la app usa un clasificador léxico local como respaldo.
 
 ## Instalación
 

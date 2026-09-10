@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+
+# Caché y estado local generados en tiempo de ejecución
+twitter_monitor_app/data/runtime/

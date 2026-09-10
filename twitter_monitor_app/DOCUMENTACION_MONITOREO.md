@@ -181,3 +181,52 @@ Los principales resultados son:
 - cero consultas automáticas a todas las categorías cuando no hay filtros
 - corte temprano al llegar al volumen objetivo
 - timelines solo bajo selección explícita
+
+---
+
+## Actualización: catálogo solo de empresas y análisis de sentimiento
+
+### Catálogo de keywords
+
+`data/keywords.py` quedó reducido a **una única fuente de keywords: la lista de empresas** indicada por el usuario (557 nombres).
+
+- `COMPANIES`: cada empresa es clave y su único alias, por ejemplo `"Aguas Andinas": ["Aguas Andinas"]`.
+- `SECTOR_TOPICS`, `PEOPLE`, `PRIORITY_PEOPLE`, `RISK_TERMS`, `CHILE_CONTEXT_TERMS`, `MONITOR_USERS` y `MONITOR_ACCOUNTS` quedaron **vacíos**.
+
+Efectos:
+
+- el clasificador ya no asigna categorías ni términos de riesgo (`category_detected` siempre es `"Sin categoría"`, `risk_terms` vacío)
+- la detección de origen chileno depende solo de `place`/`country`/`author.location`
+- las publicaciones que no mencionan ninguna empresa se descartan por el filtro estricto de keywords
+
+### Análisis DeepSeek
+
+Se eliminó el análisis anterior (implicancias de industria sanitaria + dichos de personas prioritarias) junto con `services/deepseek_analysis.py`.
+
+En su lugar:
+
+- `components/charts.py` agrega **Top 10 de empresas/keywords más mencionadas** (tabla, gráfico y CSV).
+- `services/sentiment_analysis.py` clasifica cada publicación como `positivo`, `negativo` o `neutral` usando DeepSeek (en lotes, con caché). Si falta `DEEPSEEK_API_KEY` o falla la API, usa un clasificador léxico local como respaldo.
+- Con esa clasificación se generan **dos nubes de palabras** (positivas y negativas) más un CSV con `sentimiento, palabra, frecuencia`.
+
+### Descargas
+
+- Todos los gráficos Plotly (categorías, autores, evolución, top de menciones) tienen botón **Descargar PNG**.
+- Las dos nubes de palabras tienen botón **Descargar PNG**.
+- Los datos de cada gráfico nuevo se pueden descargar en CSV.
+- La exportación de resultados (CSV/Excel) y el envío por correo siguen igual, sin el bloque de análisis en el cuerpo del correo.
+
+### Dependencias
+
+Se agregaron `matplotlib`, `wordcloud` y `kaleido==0.2.1`. `plotly` quedó fijado en `>=5.24.0,<6` porque la exportación a PNG de plotly 6+ exige `kaleido>=1.0`, que a su vez requiere Chrome instalado.
+
+### Archivos modificados en esta actualización
+
+- [data/keywords.py](data/keywords.py)
+- [services/sentiment_analysis.py](services/sentiment_analysis.py) (nuevo)
+- [services/deepseek_analysis.py](services/deepseek_analysis.py) (eliminado)
+- [services/exporter.py](services/exporter.py)
+- [components/charts.py](components/charts.py)
+- [app.py](app.py)
+- [requirements.txt](requirements.txt)
+- [README.md](README.md)
