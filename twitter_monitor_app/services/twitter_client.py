@@ -8,8 +8,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import get_settings, secret_issue
-from utils.helpers import ensure_utc_bounds, parse_datetime
+from twitter_monitor_app.config.settings import get_settings, secret_issue
+from twitter_monitor_app.utils.helpers import ensure_utc_bounds, parse_datetime
 
 logger = logging.getLogger(__name__)
 

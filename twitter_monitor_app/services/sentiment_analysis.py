@@ -8,9 +8,9 @@ from typing import Dict, Iterable, List
 import pandas as pd
 import requests
 
-from config.settings import get_settings, is_secret_configured
-from services.runtime_store import load_cache, make_cache_key, save_cache
-from utils.text_utils import normalize_text
+from twitter_monitor_app.config.settings import get_settings, is_secret_configured
+from twitter_monitor_app.services.runtime_store import load_cache, make_cache_key, save_cache
+from twitter_monitor_app.utils.text_utils import normalize_text
 
 SENTIMENTS = ("positivo", "negativo", "neutral")
 

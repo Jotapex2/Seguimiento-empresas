@@ -19,7 +19,13 @@ from requests import Response, Session
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from config.settings import is_secret_configured
+# Keep direct CLI execution compatible with package imports.
+if not __package__:
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from twitter_monitor_app.config.settings import is_secret_configured
 
 logger = logging.getLogger("google_social_monitor")
 

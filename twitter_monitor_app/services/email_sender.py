@@ -3,10 +3,7 @@ from __future__ import annotations
 import smtplib
 from email.message import EmailMessage
 
-if __package__ == "twitter_monitor_app.services":
-    from ..config.settings import email_issue, get_settings, host_issue, password_issue
-else:
-    from config.settings import email_issue, get_settings, host_issue, password_issue
+from twitter_monitor_app.config.settings import email_issue, get_settings, host_issue, password_issue
 
 
 class EmailDeliveryError(RuntimeError):

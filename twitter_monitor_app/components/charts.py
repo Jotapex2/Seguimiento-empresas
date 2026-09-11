@@ -7,8 +7,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-from services.exporter import matplotlib_figure_to_png_bytes, plotly_figure_to_png_bytes
-from services.sentiment_analysis import build_sentiment_word_frequencies, build_wordcloud_figure
+from twitter_monitor_app.services.exporter import matplotlib_figure_to_png_bytes, plotly_figure_to_png_bytes
+from twitter_monitor_app.services.sentiment_analysis import build_sentiment_word_frequencies, build_wordcloud_figure
 
 
 def _render_plotly_download(fig, name: str):

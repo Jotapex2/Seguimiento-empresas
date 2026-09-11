@@ -16,68 +16,36 @@ import streamlit as st
 PACKAGE_ROOT = Path(__file__).resolve().parent
 PACKAGE_PARENT = PACKAGE_ROOT.parent
 
-# Support both `streamlit run app.py` and package-style execution in Streamlit Cloud
-# without importing the same module tree under two different names.
-if __package__:
-    if str(PACKAGE_PARENT) not in sys.path:
-        sys.path.insert(0, str(PACKAGE_PARENT))
+# Use one package namespace in local runs and Streamlit Cloud.
+if str(PACKAGE_PARENT) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_PARENT))
 
-    from twitter_monitor_app.components.charts import render_charts, render_sentiment_clouds, render_top_mentions
-    from twitter_monitor_app.components.filters import render_sidebar_filters
-    from twitter_monitor_app.components.metrics import render_kpis
-    from twitter_monitor_app.components.tables import render_rankings, render_results_table
-    from twitter_monitor_app.components.taxonomy_editor import render_taxonomy_editor
-    from twitter_monitor_app.config.settings import get_settings
-    from twitter_monitor_app.data.keywords import get_default_catalog
-    from twitter_monitor_app.google_social_monitor import (
-        GoogleRateLimitError,
-        MAX_GOOGLE_PAGES_PER_KEYWORD,
-        collect_monitor_results,
-        has_google_api_configured,
-    )
-    from twitter_monitor_app.services.classifier import post_process_tweets
-    from twitter_monitor_app.services.data_manager import collect_api_data, mock_tweets
-    from twitter_monitor_app.services.email_sender import (
-        EmailDeliveryError,
-        email_configuration_issues,
-        send_report_email,
-        test_smtp_connection,
-    )
-    from twitter_monitor_app.services.exporter import dataframe_to_csv_bytes, dataframe_to_excel_bytes
-    from twitter_monitor_app.services.runtime_store import get_history_count, load_cache, make_cache_key, persist_history, save_cache
-    from twitter_monitor_app.services.scoring import enrich_scores
-    from twitter_monitor_app.services.sentiment_analysis import classify_sentiments
-    from twitter_monitor_app.services.twitter_client import TwitterApiError
-else:
-    if str(PACKAGE_ROOT) not in sys.path:
-        sys.path.insert(0, str(PACKAGE_ROOT))
-
-    from components.charts import render_charts, render_sentiment_clouds, render_top_mentions
-    from components.filters import render_sidebar_filters
-    from components.metrics import render_kpis
-    from components.tables import render_rankings, render_results_table
-    from components.taxonomy_editor import render_taxonomy_editor
-    from config.settings import get_settings
-    from data.keywords import get_default_catalog
-    from google_social_monitor import (
-        GoogleRateLimitError,
-        MAX_GOOGLE_PAGES_PER_KEYWORD,
-        collect_monitor_results,
-        has_google_api_configured,
-    )
-    from services.classifier import post_process_tweets
-    from services.data_manager import collect_api_data, mock_tweets
-    from services.email_sender import (
-        EmailDeliveryError,
-        email_configuration_issues,
-        send_report_email,
-        test_smtp_connection,
-    )
-    from services.exporter import dataframe_to_csv_bytes, dataframe_to_excel_bytes
-    from services.runtime_store import get_history_count, load_cache, make_cache_key, persist_history, save_cache
-    from services.scoring import enrich_scores
-    from services.sentiment_analysis import classify_sentiments
-    from services.twitter_client import TwitterApiError
+from twitter_monitor_app.components.charts import render_charts, render_sentiment_clouds, render_top_mentions
+from twitter_monitor_app.components.filters import render_sidebar_filters
+from twitter_monitor_app.components.metrics import render_kpis
+from twitter_monitor_app.components.tables import render_rankings, render_results_table
+from twitter_monitor_app.components.taxonomy_editor import render_taxonomy_editor
+from twitter_monitor_app.config.settings import get_settings
+from twitter_monitor_app.data.keywords import get_default_catalog
+from twitter_monitor_app.google_social_monitor import (
+    GoogleRateLimitError,
+    MAX_GOOGLE_PAGES_PER_KEYWORD,
+    collect_monitor_results,
+    has_google_api_configured,
+)
+from twitter_monitor_app.services.classifier import post_process_tweets
+from twitter_monitor_app.services.data_manager import collect_api_data, mock_tweets
+from twitter_monitor_app.services.email_sender import (
+    EmailDeliveryError,
+    email_configuration_issues,
+    send_report_email,
+    test_smtp_connection,
+)
+from twitter_monitor_app.services.exporter import dataframe_to_csv_bytes, dataframe_to_excel_bytes
+from twitter_monitor_app.services.runtime_store import get_history_count, load_cache, make_cache_key, persist_history, save_cache
+from twitter_monitor_app.services.scoring import enrich_scores
+from twitter_monitor_app.services.sentiment_analysis import classify_sentiments
+from twitter_monitor_app.services.twitter_client import TwitterApiError
 
 logging.basicConfig(level=logging.INFO)
 

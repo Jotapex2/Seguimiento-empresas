@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from utils.text_utils import contains_any_term, find_matching_terms, looks_spanish, normalize_text
+from twitter_monitor_app.utils.text_utils import contains_any_term, find_matching_terms, looks_spanish, normalize_text
 
 
 def detect_chile_context(text: str, context_terms: List[str]) -> bool:

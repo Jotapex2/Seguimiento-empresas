@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 import streamlit as st
 
-from config.settings import get_settings
+from twitter_monitor_app.config.settings import get_settings
 
 
 def _segment_label(option: str) -> str:

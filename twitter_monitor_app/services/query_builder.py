@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, List
 
-from utils.helpers import chunk_list
+from twitter_monitor_app.utils.helpers import chunk_list
 
 
 def build_simple_or_query(terms: Iterable[str], phrase_wrap: bool = True) -> str:

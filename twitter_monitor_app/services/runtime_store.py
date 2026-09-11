@@ -6,7 +6,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any, Dict, List
 
-from config.settings import get_settings
+from twitter_monitor_app.config.settings import get_settings
 
 
 def _runtime_dir() -> Path:
