@@ -616,6 +616,7 @@ def build_wordcloud_figure(
     colormap: str,
     *,
     empty_message: str = "Sin palabras para mostrar",
+    max_words: int = 100,
 ):
     import matplotlib
 
@@ -632,7 +633,7 @@ def build_wordcloud_figure(
                 height=400,
                 background_color="white",
                 colormap=colormap,
-                max_words=100,
+                max_words=max_words,
                 prefer_horizontal=0.9,
                 collocations=False,
             ).generate_from_frequencies(dict(frequencies))

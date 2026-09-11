@@ -68,7 +68,7 @@ def render_charts(df: pd.DataFrame):
         _render_plotly_download(fig_timeline, "evolucion_temporal")
 
 
-def build_top_mentions(df: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
+def build_top_mentions(df: pd.DataFrame, top_n: int | None = 10) -> pd.DataFrame:
     if df.empty:
         return pd.DataFrame(columns=["entidad", "menciones"])
 
@@ -93,7 +93,8 @@ def build_top_mentions(df: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
 
 
 def render_top_mentions(df: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
-    top_df = build_top_mentions(df, top_n)
+    all_mentions = build_top_mentions(df, top_n=None)
+    top_df = all_mentions.head(top_n)
     if top_df.empty:
         st.info("Sin menciones de empresas o keywords para mostrar.")
         return top_df
@@ -113,8 +114,9 @@ def render_top_mentions(df: pd.DataFrame, top_n: int = 10) -> pd.DataFrame:
 
     st.caption("Nube de empresas/keywords más mencionadas (el tamaño refleja el número de menciones)")
     fig_cloud = build_wordcloud_figure(
-        dict(zip(top_df["entidad"], top_df["menciones"])),
+        dict(zip(all_mentions["entidad"], all_mentions["menciones"])),
         "Blues",
+        max_words=max(1, len(all_mentions)),
     )
     st.pyplot(fig_cloud)
     st.download_button(
