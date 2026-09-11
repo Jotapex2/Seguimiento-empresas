@@ -263,14 +263,6 @@ def render_x_app_dashboard(filters: Dict, df: pd.DataFrame, query_stats: Dict, c
     st.subheader("Resultados")
     render_results_table(df)
 
-    insights = render_insights(df, insights)
-
-    st.subheader("Visualizaciones")
-    render_charts(df)
-
-    st.subheader("Rankings")
-    render_rankings(df)
-
     st.subheader("Exportación")
     export_df = build_export_dataframe(df, filters["export_only_high_views"])
     if filters["export_only_high_views"]:
@@ -287,6 +279,14 @@ def render_x_app_dashboard(filters: Dict, df: pd.DataFrame, query_stats: Dict, c
         render_email_report_section(filters, export_df, "twitter_monitor_results")
     else:
         st.caption("Sin datos exportables con el filtro actual.")
+    insights = render_insights(df, insights)
+
+    st.subheader("Visualizaciones")
+    render_charts(df)
+
+    st.subheader("Rankings")
+    render_rankings(df)
+
     return insights
 
 
@@ -303,8 +303,6 @@ def render_google_dashboard(
     st.subheader("Resultados")
     render_google_results(df)
 
-    insights = render_insights(df, insights)
-
     st.subheader("Exportación")
     export_name = build_google_export_name(filters)
     if not df.empty:
@@ -319,6 +317,8 @@ def render_google_dashboard(
         render_email_report_section(filters, df, export_name)
     else:
         st.caption("Sin datos exportables con el filtro actual.")
+    insights = render_insights(df, insights)
+
     return insights
 
 

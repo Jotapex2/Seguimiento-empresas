@@ -12,9 +12,13 @@ from services.sentiment_analysis import build_sentiment_word_frequencies, build_
 
 
 def _render_plotly_download(fig, name: str):
+    # Static image conversion can block in headless environments. Only run it
+    # when requested, never while displaying monitoring results.
+    if not st.button("Preparar PNG", key=f"prepare-png-{name}"):
+        return
     png_bytes = plotly_figure_to_png_bytes(fig)
     if png_bytes:
-        st.download_button("Descargar PNG", data=png_bytes, file_name=f"{name}.png", mime="image/png", key=f"png-{name}")
+        st.download_button("Descargar PNG", data=png_bytes, file_name=f"{name}.png", mime="image/png", key=f"png-{name}", on_click="ignore")
     else:
         st.caption("Descarga PNG no disponible: instala `kaleido`.")
 
