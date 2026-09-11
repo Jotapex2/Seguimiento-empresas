@@ -276,12 +276,13 @@ def render_x_app_dashboard(filters: Dict, df: pd.DataFrame, query_stats: Dict, c
     if filters["export_only_high_views"]:
         st.caption(f"Exportación filtrada: {len(export_df)} posts con viewCount mayor a 1000.")
     if not export_df.empty:
-        st.download_button("Descargar CSV", data=dataframe_to_csv_bytes(export_df), file_name="twitter_monitor_results.csv", mime="text/csv")
+        st.download_button("Descargar CSV", data=dataframe_to_csv_bytes(export_df), file_name="twitter_monitor_results.csv", mime="text/csv", on_click="ignore")
         st.download_button(
             "Descargar Excel",
             data=dataframe_to_excel_bytes(export_df),
             file_name="twitter_monitor_results.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            on_click="ignore",
         )
         render_email_report_section(filters, export_df, "twitter_monitor_results")
     else:
@@ -307,12 +308,13 @@ def render_google_dashboard(
     st.subheader("Exportación")
     export_name = build_google_export_name(filters)
     if not df.empty:
-        st.download_button("Descargar CSV", data=dataframe_to_csv_bytes(df), file_name=f"{export_name}.csv", mime="text/csv")
+        st.download_button("Descargar CSV", data=dataframe_to_csv_bytes(df), file_name=f"{export_name}.csv", mime="text/csv", on_click="ignore")
         st.download_button(
             "Descargar Excel",
             data=dataframe_to_excel_bytes(df),
             file_name=f"{export_name}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            on_click="ignore",
         )
         render_email_report_section(filters, df, export_name)
     else:
@@ -453,14 +455,15 @@ def main():
             df = build_dataframe(processed, catalog)
             persist_history(df.to_dict(orient="records"))
 
-        insights = render_x_app_dashboard(filters, df, query_stats, catalog)
+        # Preserve results before rendering widgets that can interrupt this run.
         st.session_state["last_monitor_payload"] = {
             "mode": "x_app",
             "filters": filters,
             "df": df,
             "query_stats": query_stats,
-            "insights": insights,
         }
+        insights = render_x_app_dashboard(filters, df, query_stats, catalog)
+        st.session_state["last_monitor_payload"]["insights"] = insights
         return
 
     google_platform = "linkedin" if filters["search_platform"] == "LinkedIn" else "x"
@@ -498,14 +501,14 @@ def main():
             st.error(str(exc))
             return
 
-    insights = render_google_dashboard(filters, df, google_keywords, catalog)
     st.session_state["last_monitor_payload"] = {
         "mode": "google",
         "filters": filters,
         "df": df,
         "google_keywords": list(google_keywords),
-        "insights": insights,
     }
+    insights = render_google_dashboard(filters, df, google_keywords, catalog)
+    st.session_state["last_monitor_payload"]["insights"] = insights
 
 
 if __name__ == "__main__":
